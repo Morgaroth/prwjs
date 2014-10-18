@@ -1,4 +1,4 @@
-name := "reactive-tests"
+name := "prwjs_lab2"
 
 scalaVersion := "2.10.4"
 
