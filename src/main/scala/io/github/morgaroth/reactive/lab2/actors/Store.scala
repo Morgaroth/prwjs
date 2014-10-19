@@ -30,10 +30,9 @@ class Store extends Actor with ActorLogging with randoms with randomsDSL {
     case Auctions =>
       sender ! auctions
     case AuctionEnds(sold) =>
-      if (sold) {
-        log.info(s"${sender.path.name} sold item")
-      } else {
-        log.info(s"${sender.path.name} didn't sold")
+      sold match {
+        case true => log.info(s"${sender.path.name} sold item")
+        case false => log.info(s"${sender.path.name} didn't sold")
       }
       auctions = auctions.diff(sender :: Nil)
       if (auctions.length == 0) {
