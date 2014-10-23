@@ -1,3 +1,5 @@
+import spray.revolver.RevolverPlugin._
+
 name := "prwjs_lab2"
 
 scalaVersion := "2.10.4"
@@ -7,3 +9,6 @@ libraryDependencies ++= Seq(
   "pl.morgaroth" %% "morgaroth-utils" % "1.1.1",
   "net.ceedubs" %% "ficus" % "1.0.1"
 )
+
+Revolver.settings
+

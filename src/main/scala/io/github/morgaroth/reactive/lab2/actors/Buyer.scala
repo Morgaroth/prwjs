@@ -10,6 +10,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 class Buyer(store: ActorRef) extends Actor with ActorLogging with randoms {
+
   import context._
 
   var boughtCTR = 0
@@ -28,7 +29,7 @@ class Buyer(store: ActorRef) extends Actor with ActorLogging with randoms {
     case auctions: List[ActorRef] =>
       items = new Random(Random.nextLong()).shuffle(auctions).take(2).map {
         auction =>
-          auction ! Bid(0.1)
+          auction ! Offer(0.1)
           auction
       }
       stopIfEnd()
@@ -40,13 +41,13 @@ class Buyer(store: ActorRef) extends Actor with ActorLogging with randoms {
     case OK =>
     case Beaten(price) =>
       val send = sender
-      context.system.scheduler.scheduleOnce((randomInt(400) + 300) millis) {
-        send.!(Bid(price + randGenerator.nextDouble()))(self)
+      context.system.scheduler.scheduleOnce((randomInt(400) + 400) millis) {
+        send.!(Offer(price + randGenerator.nextDouble()))(self)
       }
     case NotEnough(price) =>
       val send = sender
       context.system.scheduler.scheduleOnce((randomInt(400) + 300) millis) {
-        send.!(Bid(price + randGenerator.nextDouble()))(self)
+        send.!(Offer(price + randGenerator.nextDouble()))(self)
       }
 
     case ItemSold(item) =>

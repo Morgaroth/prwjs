@@ -15,7 +15,7 @@ object FSMAuctionActor {
   case object Deleted extends State
 
   sealed trait Data
-  case object NotBiddedYet extends Data
+  case object NotYetAuctioned extends Data
   case class AuctionState(actualPrice: Double, winner: ActorRef) extends Data
 }
 
@@ -25,25 +25,23 @@ with ActorLogging with FSM[State, Data] {
 
   import context.dispatcher
 
-  startWith(Created, NotBiddedYet)
-
-  when(Created) {
-    case Event(bid: Bid, NotBiddedYet) =>
-      log.info(s"${sender.path.name} starts auction with ${bid.price}DC")
-      goto(Active) using AuctionState(bid.price, sender)
-    case Event(TimeEnd, _) =>
+  when(Created, stateTimeout = 5 seconds) {
+    case Event(offer: Offer, NotYetAuctioned) =>
+      log.info(s"${sender.path.name} starts auction with ${offer.price}DC")
+      goto(Active) using AuctionState(offer.price, sender)
+    case Event(StateTimeout, _) =>
       log.info(s"auction ends")
       context.system.scheduler.scheduleOnce(30 seconds, self, Delete)
-      goto(Ignored) using NotBiddedYet
+      goto(Ignored) using NotYetAuctioned
   }
 
   when(Active) {
-    case Event(Bid(price), AuctionState(actualPrice, winner)) if price > actualPrice =>
-      log.info(s"${sender.path.name} beat with ${price}DC")
+    case Event(Offer(price), AuctionState(actualPrice, winner)) if price > actualPrice =>
+      log.info(s"${sender.path.name} beat with $price DC")
       winner ! Beaten(actualPrice)
       sender ! OK
       stay using AuctionState(price, sender)
-    case Event(Bid(_), state: AuctionState) =>
+    case Event(Offer(_), state: AuctionState) =>
       sender ! NotEnough(state.actualPrice)
       stay()
     case Event(TimeEnd, state: AuctionState) =>
@@ -61,7 +59,7 @@ with ActorLogging with FSM[State, Data] {
   }
 
   when(Sold) {
-    case Event(Bid(_), _) =>
+    case Event(Offer(_), _) =>
       sender ! ItemSold(itemName)
       stay()
     case Event(Delete, state: AuctionState) =>
@@ -69,5 +67,7 @@ with ActorLogging with FSM[State, Data] {
       stop()
   }
 
-  context.system.scheduler.scheduleOnce(bidTime, self, TimeEnd)
+  startWith(Created, NotYetAuctioned)
+
+  initialize()
 }

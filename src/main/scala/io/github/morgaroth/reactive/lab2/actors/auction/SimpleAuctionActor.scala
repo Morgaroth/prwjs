@@ -20,12 +20,12 @@ class SimpleAuctionActor(itemName: String, bidTime: FiniteDuration)
   var winner: Option[ActorRef] = None
 
   def active = LoggingReceive {
-    case Bid(price) if price > actualPrice =>
+    case Offer(price) if price > actualPrice =>
       actualPrice = price
       winner.map(_ ! Beaten(actualPrice))
       winner = Some(sender)
       sender ! OK
-    case Bid(_) =>
+    case Offer(_) =>
       sender ! NotEnough(actualPrice)
     case TimeEnd =>
       winner.map(_ ! YouWin(itemName, actualPrice))
@@ -38,7 +38,7 @@ class SimpleAuctionActor(itemName: String, bidTime: FiniteDuration)
     case TimeEnd =>
       context.system.scheduler.scheduleOnce(30 seconds, self, Delete)
       context become ignored
-    case bid: Bid =>
+    case bid: Offer =>
       context become active
       self forward bid
   }
