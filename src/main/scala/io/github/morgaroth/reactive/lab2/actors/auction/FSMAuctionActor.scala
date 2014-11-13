@@ -25,11 +25,13 @@ with ActorLogging with FSM[State, Data] {
 
   import context.dispatcher
 
-  when(Created, stateTimeout = 5 seconds) {
+  context.system.scheduler.scheduleOnce(bidTime, self, TimeEnd)
+
+  when(Created, stateTimeout = 20 seconds) {
     case Event(offer: Offer, NotYetAuctioned) =>
-      log.info(s"${sender.path.name} starts auction with ${offer.price}DC")
-      goto(Active) using AuctionState(offer.price, sender)
-    case Event(StateTimeout, _) =>
+      log.info(s"${sender().path.name} starts auction with ${offer.price}DC")
+      goto(Active) using AuctionState(offer.price, sender())
+    case Event(StateTimeout, _) | Event(TimeEnd, _) =>
       log.info(s"auction ends")
       context.system.scheduler.scheduleOnce(30 seconds, self, Delete)
       goto(Ignored) using NotYetAuctioned
@@ -37,10 +39,10 @@ with ActorLogging with FSM[State, Data] {
 
   when(Active) {
     case Event(Offer(price), AuctionState(actualPrice, winner)) if price > actualPrice =>
-      log.info(s"${sender.path.name} beat with $price DC")
+      log.info(s"${sender().path.name} beat with $price DC")
       winner ! Beaten(actualPrice)
       sender ! OK
-      stay using AuctionState(price, sender)
+      stay using AuctionState(price, sender())
     case Event(Offer(_), state: AuctionState) =>
       sender ! NotEnough(state.actualPrice)
       stay()

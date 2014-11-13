@@ -2,25 +2,51 @@ package io.github.morgaroth.reactive.lab2.app
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
-import io.github.morgaroth.reactive.lab2.actors.{Buyer, Store}
+import io.github.morgaroth.reactive.lab2.actors.SoulsReaper.WatchHim
+import io.github.morgaroth.reactive.lab2.actors.{AuctionSearch, Buyer, Seller, SoulsReaper}
+import io.github.morgaroth.reactive.lab2.utils.MapOfArraysConfigReader
+import net.ceedubs.ficus.Ficus._
+import akka.event.{Logging,LoggingAdapter}
 
 import scala.concurrent.duration._
-import net.ceedubs.ficus.Ficus._
 
-object Application {
+object Application extends MapOfArraysConfigReader {
+
+  class Reaper extends SoulsReaper {
+    // Derivations need to implement this method.  It's the
+    override def allSoulsReaped(): Unit = context.system.shutdown()
+  }
+
+
   def main(args: Array[String]) {
     val system = ActorSystem("Lydie")
     import system.dispatcher
 
-    val storeActor = system.actorOf(Props[Store], "Store")
+    val log = Logging(system,"APP")
 
-    val buyers = ConfigFactory.load().as[Option[List[String]]]("reactive.lab2.buyers").
-      getOrElse(List("Zbyszek", "Staszek", "Jozek", "Zdzisek", "Mietek", "Franciszek"))
+    val reaper = system.actorOf(Props[Reaper],"reaper")
 
-    buyers.map {
-      name => system.actorOf(Props(classOf[Buyer], storeActor), name)
+    val buyers = readMapStringAtPath("reactive.lab2.buyers")
+
+    val sellers = readMapListStringAtPath("reactive.lab2.sellers").map { x =>
+      val (name, items) = x
+      val seller = system.actorOf(Props(classOf[Seller], items), s"seller_$name")
+      reaper ! WatchHim(seller)
+      seller
     }
 
-    system.scheduler.scheduleOnce(3 minutes)(system.shutdown())
+    val auctionSearchActor = system.actorOf(Props[AuctionSearch], "AuctionSearch")
+
+    println(auctionSearchActor.path)
+
+    system.scheduler.scheduleOnce(2 seconds) {
+      buyers.map { x =>
+        val (name, target) = x
+        val buyer = system.actorOf(Props(classOf[Buyer], target), name)
+        reaper ! WatchHim(buyer)
+      }
+    }
+
+    system.scheduler.scheduleOnce(10 minutes)(system.shutdown())
   }
 }

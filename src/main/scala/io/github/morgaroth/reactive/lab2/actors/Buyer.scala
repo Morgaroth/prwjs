@@ -1,37 +1,36 @@
 package io.github.morgaroth.reactive.lab2.actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor._
 import akka.event.LoggingReceive
-import io.github.morgaroth.reactive.lab2.actors.Store.Auctions
+import io.github.morgaroth.reactive.lab2.actors.AuctionSearch.{SearchResults, Search}
 import io.github.morgaroth.reactive.lab2.actors.auction.AuctionActorMessages._
 import pl.morgaroth.utils.random.randoms
 
 import scala.concurrent.duration._
 import scala.util.Random
 
-class Buyer(store: ActorRef) extends Actor with ActorLogging with randoms {
+class Buyer(target: String) extends Actor with ActorLogging with randoms {
 
   import context._
+
+  val auctionSearch = context actorSelection "/user/AuctionSearch"
+
+  auctionSearch ! Search(target)
 
   var boughtCTR = 0
   var items: List[ActorRef] = _
 
   def stopIfEnd() = if (items.length == boughtCTR) {
     log.info(s"${self.path.name} die.")
-    context stop self
+    self ! PoisonPill
   }
 
   override def receive = initializing
 
-  store ! Auctions
-
   def initializing = LoggingReceive {
-    case auctions: List[ActorRef] =>
-      items = new Random(Random.nextLong()).shuffle(auctions).take(2).map {
-        auction =>
-          auction ! Offer(0.1)
-          auction
-      }
+    case SearchResults(auctions) =>
+      items = auctions
+      items.foreach(_ ! Offer(0.1))
       stopIfEnd()
       context become working
   }
@@ -40,14 +39,14 @@ class Buyer(store: ActorRef) extends Actor with ActorLogging with randoms {
   def working = LoggingReceive {
     case OK =>
     case Beaten(price) =>
-      val send = sender
-      context.system.scheduler.scheduleOnce((randomInt(400) + 400) millis) {
+      val send = sender()
+      context.system.scheduler.scheduleOnce((randomInt(200) + 100) millis) {
         send.!(Offer(price + randGenerator.nextDouble()))(self)
       }
     case NotEnough(price) =>
-      val send = sender
-      context.system.scheduler.scheduleOnce((randomInt(400) + 300) millis) {
-        send.!(Offer(price + randGenerator.nextDouble()))(self)
+      val send = sender()
+      context.system.scheduler.scheduleOnce((randomInt(200) + 100) millis) {
+        send.tell(Offer(price + randGenerator.nextDouble()), self)
       }
 
     case ItemSold(item) =>
