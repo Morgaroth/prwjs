@@ -27,9 +27,10 @@ with ActorLogging with FSM[State, Data] {
 
   context.system.scheduler.scheduleOnce(bidTime, self, TimeEnd)
 
-  when(Created, stateTimeout = 20 seconds) {
+  when(Created, stateTimeout = 10 seconds) {
     case Event(offer: Offer, NotYetAuctioned) =>
       log.info(s"${sender().path.name} starts auction with ${offer.price}DC")
+      sender() ! OK
       goto(Active) using AuctionState(offer.price, sender())
     case Event(StateTimeout, _) | Event(TimeEnd, _) =>
       log.info(s"auction ends")
