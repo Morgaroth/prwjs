@@ -9,7 +9,10 @@ import scala.concurrent.duration._
 
 object Application {
   class Reaper extends SoulsReaper {
-    override def allSoulsReaped(): Unit = context.system.shutdown()
+    override def allSoulsReaped(): Unit = {
+      log.info("No alive actors left. Souls Reaper shutdowns The System.")
+      context.system.shutdown()
+    }
   }
 }
 

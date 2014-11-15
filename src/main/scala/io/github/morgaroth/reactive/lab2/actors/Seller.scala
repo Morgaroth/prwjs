@@ -5,7 +5,7 @@ import io.github.morgaroth.reactive.lab2.actors.AuctionSearch.{Register, Unregis
 import io.github.morgaroth.reactive.lab2.actors.auction.AuctionActorMessages.AuctionEnds
 import io.github.morgaroth.reactive.lab2.actors.auction.FSMAuctionActor
 import io.github.morgaroth.reactive.lab2.utils.randomsDSL
-import pl.morgaroth.utils.random.randoms
+import io.github.morgaroth.utils.random.randoms
 
 import scala.concurrent.duration._
 
