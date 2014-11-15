@@ -41,5 +41,4 @@ class FSMAuctionActorTest extends TestKit(ActorSystem("test")) with WordSpecLike
       b1.expectMsg(20 seconds, AuctionActorMessages.OK)
     }
   }
-
 }
