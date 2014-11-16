@@ -1,6 +1,6 @@
 package io.github.morgaroth.reactive.lab2.actors
 
-import akka.actor.{PoisonPill, Actor, ActorLogging, Props}
+import akka.actor._
 import io.github.morgaroth.reactive.lab2.actors.AuctionSearch.{Register, Unregister}
 import io.github.morgaroth.reactive.lab2.actors.auction.AuctionActorMessages.AuctionEnds
 import io.github.morgaroth.reactive.lab2.actors.auction.FSMAuctionActor
@@ -15,14 +15,12 @@ object Seller {
 
 class Seller(items: List[String]) extends Actor with ActorLogging with randoms with randomsDSL {
 
-  import context.dispatcher
+  val auctionSearch = context.actorSelection("/user/AuctionSearch")
 
-  val auctionSearch = context.actorSelection("/user/AuctionSearch").resolveOne(10 seconds)
-
-  var auctions = items.map(item => {
+  var auctions: Map[ActorRef, String] = items.map(item => {
     val args = 30 ~ 50 random() seconds span
     val auction = context.actorOf(Props(classOf[FSMAuctionActor], item, args), s"""${item.replaceAll(" ", "_")}_auction""")
-    auctionSearch.map(_.tell(Register(item), auction))
+    auctionSearch.tell(Register(item), auction)
     auction -> item
   }).toMap
 
@@ -32,8 +30,8 @@ class Seller(items: List[String]) extends Actor with ActorLogging with randoms w
         case true => log.info(s"${sender().path.name} sold item")
         case false => log.info(s"${sender().path.name} didn't sold")
       }
+      auctionSearch.tell(Unregister(auctions(sender())), sender())
       auctions -= sender
-      auctionSearch.map(_.tell(Unregister(auctions(sender())), sender()))
       if (auctions.size == 0) {
         log.info(s"no auctions left, shutdown")
         self ! PoisonPill

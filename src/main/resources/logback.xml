@@ -2,7 +2,7 @@
 
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%-30(%d{HH:mm:ss.SSS} [%thread]) %-5level %logger{15} - %msg%n</pattern>
+            <pattern>%-13(%X{akkaTimestamp}) %-5level %X{akkaSource} - %msg%n</pattern>
         </encoder>
     </appender>
 

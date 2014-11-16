@@ -2,7 +2,7 @@ package io.github.morgaroth.reactive.lab2.app
 
 import akka.actor.{ActorSystem, Props}
 import io.github.morgaroth.reactive.lab2.actors.SoulsReaper.WatchHim
-import io.github.morgaroth.reactive.lab2.actors.{AuctionSearch, Buyer, Seller, SoulsReaper}
+import io.github.morgaroth.reactive.lab2.actors._
 import io.github.morgaroth.reactive.lab2.app.Application.Reaper
 
 import scala.concurrent.duration._
@@ -23,14 +23,14 @@ trait Application {
     val system = ActorSystem("Lydie")
     import system.dispatcher
 
+    system.actorOf(MasterSearch.props, "AuctionSearch")
+
     val reaper = system.actorOf(Props[Reaper], "reaper")
 
     sellers.map { sellerConf =>
       val seller = system.actorOf(Props(classOf[Seller], sellerConf.items), s"seller_${sellerConf.name}")
       reaper ! WatchHim(seller)
     }
-
-    system.actorOf(Props[AuctionSearch], "AuctionSearch")
 
     system.scheduler.scheduleOnce(1 seconds) {
       buyers.map { buyerCfg =>

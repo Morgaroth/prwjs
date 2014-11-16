@@ -16,7 +16,6 @@ trait AppConfiguration extends Configuration with MapOfArraysConfigReader {
 
   override def buyers = readList("reactive.lab2.buyers",
     (key: ConfigKey, cfg: ConfigValue) => {
-      print(cfg)
       BuyerConf(key, cfg.getString("target"), cfg.getDouble("max-price"))
     }
   )
