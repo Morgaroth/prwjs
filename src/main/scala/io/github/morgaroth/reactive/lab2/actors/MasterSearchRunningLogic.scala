@@ -46,6 +46,7 @@ object PartitionVariant {
         }
     }
   }
+  def apply() = new PartitionVariant
 }
 
 class PartitionVariant extends MasterSearchRunningLogic {
@@ -56,6 +57,10 @@ class PartitionVariant extends MasterSearchRunningLogic {
     router.route(search, collector)
   }
   override def name = "partition"
+}
+
+object ReplicatedVariant{
+  def apply() = new ReplicatedVariant
 }
 
 class ReplicatedVariant extends MasterSearchRunningLogic {

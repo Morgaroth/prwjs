@@ -19,7 +19,7 @@ class AuctionSearch extends Actor with ActorLogging {
 
   override def receive = LoggingReceive {
     case Search(searchPhase) =>
-      log.info(s"received search for $searchPhase request for ${sender().path}")
+      log.info(s"received search request for '$searchPhase' from ${sender().path}")
       val phase = searchPhase.toLowerCase
       sender() ! SearchResults(auctions.filterKeys(_.contains(phase)).values.toList)
     case Unregister(auctionName) =>

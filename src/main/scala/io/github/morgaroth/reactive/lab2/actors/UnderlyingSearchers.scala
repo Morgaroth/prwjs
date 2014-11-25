@@ -10,6 +10,8 @@ object UnderlyingSearchers {
   implicit def IntToUnderLyingSearchers(count: Int): UnderlyingSearchers = count.toLong
   implicit def unwrapUnderlyingSearchers(obj: UnderlyingSearchers) = obj.value
   implicit val defaultUnderlyingSearches = LongToUnderLyingSearchers(
-  ConfigFactory.load().as[Option[Long]]("reactive.lab2.master-search.underlying-count").getOrElse(5L)
+    ConfigFactory.load().as[Option[Long]]("reactive.lab2.master-search.underlying-count").getOrElse(5L)
   )
+
+  def apply(count: Long) = new UnderlyingSearchers(count)
 }

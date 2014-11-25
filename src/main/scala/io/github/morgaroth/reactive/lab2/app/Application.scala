@@ -17,10 +17,10 @@ object Application {
 }
 
 trait Application {
-  this: Configuration =>
+  this: Configuration with CoreSystem =>
 
   def run() {
-    val system = ActorSystem("Lydie")
+
     import system.dispatcher
 
     system.actorOf(MasterSearch.props, "AuctionSearch")
