@@ -5,6 +5,7 @@ import io.github.morgaroth.reactive.lab2.actors.auction.AuctionActorMessages._
 import io.github.morgaroth.reactive.lab2.actors.auction.FSMAuctionActor._
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 object FSMAuctionActor {
   sealed trait State
