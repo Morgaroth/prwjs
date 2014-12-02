@@ -1,11 +1,12 @@
 package io.github.morgaroth.reactive.lab2.app
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.Props
 import io.github.morgaroth.reactive.lab2.actors.SoulsReaper.WatchHim
 import io.github.morgaroth.reactive.lab2.actors._
 import io.github.morgaroth.reactive.lab2.app.Application.Reaper
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 object Application {
   class Reaper extends SoulsReaper {
@@ -24,6 +25,7 @@ trait Application {
     import system.dispatcher
 
     system.actorOf(MasterSearch.props, "AuctionSearch")
+    system.actorOf(Props(classOf[NotifierActor], AuctionPublisherAddress), "Notifier")
 
     val reaper = system.actorOf(Props[Reaper], "reaper")
 

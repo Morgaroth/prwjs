@@ -1,6 +1,7 @@
 package io.github.morgaroth.reactive.lab2.actors.auction
 
 import akka.actor._
+import io.github.morgaroth.reactive.lab2.actors.NotifierActor.Notify
 import io.github.morgaroth.reactive.lab2.actors.auction.AuctionActorMessages._
 import io.github.morgaroth.reactive.lab2.actors.auction.FSMAuctionActor._
 
@@ -26,6 +27,8 @@ with ActorLogging with FSM[State, Data] {
 
   import context.dispatcher
 
+  val notifier = context actorSelection "/user/Notifier"
+
   context.system.scheduler.scheduleOnce(bidTime, self, TimeEnd)
 
   when(Created, stateTimeout = 10 seconds) {
@@ -44,9 +47,11 @@ with ActorLogging with FSM[State, Data] {
       log.info(s"${sender().path.name} beat with $price DC")
       winner ! Beaten(actualPrice)
       sender ! OK
+      notifier ! Notify(itemName, sender().path.name, price)
       stay using AuctionState(price, sender())
     case Event(Offer(_), state: AuctionState) =>
       sender ! NotEnough(state.actualPrice)
+      notifier ! Notify(itemName, state.winner.path.name, state.actualPrice)
       stay()
     case Event(TimeEnd, state: AuctionState) =>
       log.info(s"auction ends")
