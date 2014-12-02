@@ -39,6 +39,7 @@ class NotifierRequester(notify: Notify, address: String) extends Actor with Acto
     case (notify: Notify, address: String) =>
       val unexpectedProblem = Random.nextInt()
       if (unexpectedProblem % 2 == 0) throw UnExpectedProblemOccurred(s"$unexpectedProblem unexpectedly isn't odd !")
+
       pipe(Post(s"$address/notify/", notify)).map { response =>
         log.info(s"posting notification ends with status ${response.status} and response ${response.entity.asString}")
       }.onFailure {
