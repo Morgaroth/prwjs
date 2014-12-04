@@ -63,7 +63,7 @@ class NotifierActor(AuctionPublisher: String) extends Actor with ActorLogging {
       log.error(s"child threw $t, stopping him")
       Stop
     case t: UnExpectedProblemOccurred =>
-      log.error(s"child threw $t with message \"${t.message}\", Restarting him")
+      log.error(s"child threw $t with message ${t.message}, Restarting him")
       Restart
     case t: Throwable =>
       log.error(s"child threw $t, escalating this problem")
